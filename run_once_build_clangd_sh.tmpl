@@ -1,0 +1,67 @@
+#!/bin/bash
+
+set -e
+
+LLVM_VERSION="llvmorg-17.0.0" # Set to the desired LLVM version
+BUILD_DIR="$HOME/llvm-project-build"
+INSTALL_DIR="$HOME/llvm-project-install"
+
+# Function to install dependencies on macOS
+install_dependencies_macos() {
+    echo "Installing dependencies on macOS..."
+    if ! command -v brew >/dev/null 2>&1; then
+        echo "Installing Homebrew..."
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    fi
+    brew install cmake ninja python3
+}
+
+# Function to install dependencies on Ubuntu
+install_dependencies_ubuntu() {
+    echo "Installing dependencies on Ubuntu..."
+    sudo apt-get update
+    sudo apt-get install -y build-essential cmake ninja-build python3 python3-pip libssl-dev zlib1g-dev
+}
+
+# Detect OS and install dependencies
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    install_dependencies_macos
+elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    install_dependencies_ubuntu
+else
+    echo "Unsupported OS: $OSTYPE"
+    exit 1
+fi
+
+# Clone LLVM project
+echo "Cloning LLVM project..."
+if [[ ! -d "$HOME/llvm-project" ]]; then
+    git clone --depth 1 --branch "$LLVM_VERSION" https://github.com/llvm/llvm-project.git "$HOME/llvm-project"
+else
+    echo "LLVM project already cloned."
+fi
+
+# Create build directory
+mkdir -p "$BUILD_DIR"
+cd "$BUILD_DIR"
+
+# Configure the build
+echo "Configuring LLVM build with cmake..."
+cmake -G Ninja \
+    -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra" \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR" \
+    ../llvm-project/llvm
+
+# Build LLVM and Clang
+echo "Building LLVM and Clang..."
+cmake --build .
+
+# Install LLVM and Clang
+echo "Installing LLVM and Clang to $INSTALL_DIR..."
+cmake --install .
+
+# Verify installation
+echo "Installation completed. clang version:"
+"$INSTALL_DIR/bin/clang" --version
+
