@@ -54,10 +54,10 @@ build_and_install_nvim() {
 
   # Navigate to the source directory and build Neovim
   cd "$HOME/neovim"
-  make CMAKE_BUILD_TYPE=RelWithDebInfo
 
+  cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
   # Install Neovim
-  sudo make -j install
+  sudo ninja install
 
   echo "Neovim built and installed successfully."
 }
