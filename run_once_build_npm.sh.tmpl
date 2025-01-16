@@ -1,0 +1,42 @@
+#!/bin/bash
+
+set -e
+
+# Function to install Node.js and npm on macOS
+install_on_macos() {
+    echo "Installing Node.js on macOS..."
+    if ! command -v brew >/dev/null 2>&1; then
+        echo "Homebrew not found. Installing Homebrew first..."
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    fi
+    brew install node
+}
+
+# Function to install Node.js and npm on Ubuntu
+install_on_ubuntu() {
+    echo "Installing Node.js on Ubuntu..."
+    if ! command -v curl >/dev/null 2>&1; then
+        echo "Installing curl..."
+        sudo apt-get update
+        sudo apt-get install -y curl
+    fi
+
+    # Use NodeSource script for stable Node.js versions
+    curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+    sudo apt-get install -y nodejs
+}
+
+# Detect OS and install Node.js accordingly
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    install_on_macos
+elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    install_on_ubuntu
+else
+    echo "Unsupported operating system: $OSTYPE"
+    exit 1
+fi
+
+# Verify installation
+node -v
+npm -v
+
